@@ -7,6 +7,9 @@ import { AlignJustifyIcon, Search, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import HeaderSearchBar from './HeaderSearchBar';
+import SideCart from '../cart/SideCart';
+import { useCart } from '@/context/CartProvider';
 
 const AnnouncementBar = () => {
   return (
@@ -22,13 +25,27 @@ const AnnouncementBar = () => {
 
 type HeaderProps = {
   user: IUser | undefined;
+  categorySelected: React.ReactNode;
 };
 
-const Header = ({ user }: HeaderProps) => {
+const Header = ({ user, categorySelected }: HeaderProps) => {
   const router = useRouter();
+
+  const { countAllItems } = useCart();
 
   const [isOpen, setIsOpen] = useState(true);
   const [prevScrollY, setPrevScrollY] = useState(0);
+  const [showSideCart, setShowSideCart] = useState(false);
+
+  const cartItemsCount = countAllItems();
+
+  const handleOpenSideCart = () => {
+    setShowSideCart(true);
+  };
+
+  const handleCloseSideCart = () => {
+    setShowSideCart(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,83 +69,85 @@ const Header = ({ user }: HeaderProps) => {
   }, [prevScrollY]);
 
   return (
-    <header className="sticky top-0 z-50 w-full">
-      <div
-        className={cn(
-          'w-full transform bg-white shadow-md transition-transform duration-300 ease-in-out',
-          isOpen ? 'translate-y-0' : '-translate-y-full',
-        )}
-      >
-        <AnnouncementBar />
+    <>
+      <header className="sticky top-0 z-50 w-full">
+        <div
+          className={cn(
+            'w-full transform bg-white shadow-md transition-transform duration-300 ease-in-out',
+            isOpen ? 'translate-y-0' : '-translate-y-full',
+          )}
+        >
+          <AnnouncementBar />
 
-        <div className="flex w-full items-center justify-between border-gray-100 bg-white/80 py-3 shadow-sm backdrop-blur-sm sm:py-4">
-          <div className="jb ic container mx-auto flex px-8">
-            {/* LEFT */}
-            <div className="flex flex-1 items-center justify-start gap-4 sm:gap-6">
-              <button className="text-gray-700 hover:text-gray-900 md:hidden">
-                <AlignJustifyIcon />
-              </button>
+          <div className="flex w-full items-center justify-between border-gray-100 bg-white/80 py-3 shadow-sm backdrop-blur-sm sm:py-4">
+            <div className="jb ic container mx-auto flex px-8">
+              {/* LEFT */}
+              <div className="flex flex-1 items-center justify-start gap-4 sm:gap-6">
+                <button className="text-gray-700 hover:text-gray-900 md:hidden">
+                  <AlignJustifyIcon />
+                </button>
 
-              <nav className="hidden gap-4 text-sm font-medium md:flex lg:gap-6">
-                <Link href="#">Shop</Link>
-                <Link href="#">New Arrivals</Link>
-                <Link href="#">Sale</Link>
-              </nav>
-            </div>
-            {/* END LEFT */}
-
-            {/* CENTER */}
-            <Link href="#" className="absolute left-1/2 -translate-x-1/2">
-              <span className="text-xl font-bold tracking-tight sm:text-2xl">
-                DEAL
-              </span>
-            </Link>
-            {/* END CENTER */}
-
-            {/* RIGHT */}
-            <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4">
-              <button className="hidden text-gray-700 hover:text-gray-900 sm:block">
-                <Search />
-              </button>
-
-              {user ? (
-                <>
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <span className="hidden text-sm text-gray-700 md:block">
-                      {user.name.split(' ')[0]}
-                    </span>
-                    <Link
-                      href="#"
-                      className="text-xs font-medium text-gray-700 hover:text-gray-900 sm:text-sm"
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        await signOut();
-                        router.refresh();
-                      }}
-                    >
-                      Sign Out
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Link href="/auth/login">Login</Link>
-                  <Link href="/auth/register">Register</Link>
-                </>
-              )}
-
-              <div className="relative text-gray-700 hover:text-gray-900">
-                <ShoppingCart />
-                <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-black text-[10px] text-white sm:h-4 sm:w-4 sm:text-xs">
-                  0
-                </span>
+                <nav className="hidden gap-4 text-sm font-medium md:flex lg:gap-6">
+                  {categorySelected}
+                </nav>
               </div>
+              {/* END LEFT */}
+
+              {/* CENTER */}
+              <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+                <span className="text-xl font-bold tracking-tight sm:text-2xl">
+                  DEAL
+                </span>
+              </Link>
+              {/* END CENTER */}
+
+              {/* RIGHT */}
+              <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4">
+                <HeaderSearchBar />
+
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <span className="hidden text-sm text-gray-700 md:block">
+                        {user.name.split(' ')[0]}
+                      </span>
+                      <Link
+                        href="#"
+                        className="text-xs font-medium text-gray-700 hover:text-gray-900 sm:text-sm"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          await signOut();
+                          router.refresh();
+                        }}
+                      >
+                        Sign Out
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login">Login</Link>
+                    <Link href="/auth/register">Register</Link>
+                  </>
+                )}
+
+                <div
+                  onClick={handleOpenSideCart}
+                  className="relative cursor-pointer text-gray-700 hover:text-gray-900"
+                >
+                  <ShoppingCart />
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-black text-[10px] text-white sm:h-4 sm:w-4 sm:text-xs">
+                    {cartItemsCount}
+                  </span>
+                </div>
+              </div>
+              {/* END RIGHT */}
             </div>
-            {/* END RIGHT */}
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <SideCart visible={showSideCart} onClose={handleCloseSideCart} />
+    </>
   );
 };
 
